@@ -1,0 +1,109 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <script type="text/javascript">
+    window.onload = function () {
+        var charts = {};
+        var updateInterval = 1000;
+        var dataLength = 500;
+        var y0 = 100;
+
+        var display = function(str){
+            return str.replace(/\-/g, ".");
+        };
+
+        var refreshChart = function(key, value, father) {
+            y0 += 20 * (Math.random() - 0.5);
+            
+            if(typeof value == "number"){
+                kc = key;
+                if(charts[kc] == undefined){
+                    charts[kc] = {};
+                    $(father).append("<div style=\"float:left; width:32%; margin-left:1%;height:240px;\"><div id=\"" + kc + "\"></div></div>");
+                    charts[kc].data = [];
+                    charts[kc].chart = new CanvasJS.Chart(kc,{       
+                        data: [{
+                            type: "line",
+                            dataPoints: charts[kc].data
+                        }],
+                        height:240,
+                        title: {
+                            text: key
+                        },
+                        axisY:{
+                            gridThickness: 1,
+                        },
+                    });
+                } 
+
+                //charts[key].data.push({x: new Date(), y: data[key]});
+                charts[kc].data.push({x: new Date(), y: y0});
+                if(charts[kc].data.length > dataLength){
+                    charts[kc].data.shift();
+                }
+                charts[kc].chart.render();
+                $(".canvasjs-chart-credit").hide();
+            }
+            else{
+                if($("#" + key).length == 0){
+                    $(father).append("<div style=\"cursor:pointer;float:left; width:98.5%;margin-left:1.5%;\"><h2 id=\""+ key + "-h\">" + display(key) + "</h2><div id=\""+ key + "\"></div></div>");
+                    $("#" + key + "-h").bind("click", function(){
+                        if($("#" + key).is(":hidden")){
+                            $("#" + key).show();
+                            $("#" + key + "-h").css("background-color", "#F9F9F9");
+                        } else {
+                            $("#" + key).hide();
+                            $("#" + key + "-h").css("background-color", "#F0FFFF");
+                        }
+                    });
+                }
+
+                if(typeof value == "object" && !(value instanceof Array)){
+                    for(k2 in value){
+                        kc = key + "-" + k2;
+                        refreshChart(kc, value[k2], "#" + key);    
+                    }
+                }
+
+                if(value instanceof Array){
+                    for(var i = 0; i < value.length; i++){
+                        kc = key + "-" + i;
+                        refreshChart(kc, value[i], "#" + key);
+                    }
+                }
+            }
+
+            
+        }
+
+        var updateChart = function (root) {
+            $.get("./api/test.json", function(data){
+                refreshChart(root, data, "#main");
+            }, "json");  
+
+        };
+
+        // update chart after specified time. 
+        setInterval(function(){updateChart("charts")}, updateInterval); 
+
+    }
+    </script>
+    <link href="http://cdn.bootcss.com/bootstrap/3.2.0/css/bootstrap-theme.css" rel="stylesheet">
+    <script type="text/javascript" src="./js/canvasjs.min.js"></script>
+    <script type="text/javascript" src="./js/jquery-2.1.1.min.js"></script>
+    <style type="text/css" media="screen">
+    body {width: 100%; margin: 0 auto;}
+    #main {width: 99%; float: left; margin: 0 auto;}
+    h2 {font-size: 16px; width: 99%; border: #AAA solid 1px; background-color: #F9F9F9; padding: 5px;margin:0px; margin-top: 5px;} 
+    h1 {width: 70%; margin-left: 16px;font-size: 32px; margin-bottom: 8px; padding-top: 30px; font-weight: bold;} 
+    .logo {margin-left: 1.5%; height: 64px; float: left;}  
+    </style>
+    <title>Woodpecker - Dynamic Charts</title>
+</head>
+<body>
+    <img src="./img/logo.jpg" class="logo"/>
+    <h1>Woodpecker</h1>
+    <div id="main"></div>
+</body>
+</html>
